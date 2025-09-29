@@ -4,53 +4,90 @@ import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
+const API_URL = 'https://functions.poehali.dev/172fa20b-c0af-4051-bf86-5dbf96c94726';
+
 const Index = () => {
   const [energy, setEnergy] = useState(0);
   const [isCollecting, setIsCollecting] = useState(false);
   const [canCollect, setCanCollect] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const getUserId = () => {
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      userId = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('userId', userId);
+    }
+    return userId;
+  };
+
+  const fetchEnergyStatus = async () => {
+    try {
+      const userId = getUserId();
+      const response = await fetch(API_URL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId
+        }
+      });
+      
+      const data = await response.json();
+      setEnergy(data.energy);
+      setCanCollect(data.canCollect);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching energy status:', error);
+      toast.error('Ошибка загрузки данных');
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const storedEnergy = localStorage.getItem('energy');
-    const storedDate = localStorage.getItem('energyDate');
-    const today = new Date().getDate();
-
-    if (storedDate !== String(today)) {
-      setCanCollect(true);
-    } else {
-      setCanCollect(false);
-    }
-
-    if (storedEnergy) {
-      setEnergy(Number(storedEnergy));
-    }
+    fetchEnergyStatus();
   }, []);
 
-  const getEnergy = () => {
-    const time = new Date();
-    const day = time.getDate();
-    const storedDate = localStorage.getItem('energyDate');
-
-    if (String(day) !== storedDate) {
-      setIsCollecting(true);
+  const getEnergy = async () => {
+    setIsCollecting(true);
+    
+    try {
+      const userId = getUserId();
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId
+        }
+      });
       
-      setTimeout(() => {
-        const newEnergy = energy + 3;
-        setEnergy(newEnergy);
-        localStorage.setItem('energy', String(newEnergy));
-        localStorage.setItem('energyDate', String(day));
+      const data = await response.json();
+      
+      if (data.success) {
+        setEnergy(data.energy);
         setCanCollect(false);
-        setIsCollecting(false);
-        
         toast.success('Энергия получена!', {
           description: '+3 единицы энергии добавлено',
         });
-      }, 600);
-    } else {
-      toast.info('Уже получено', {
-        description: 'Возвращайтесь завтра за новой энергией',
-      });
+      } else {
+        toast.info('Уже получено', {
+          description: 'Возвращайтесь завтра за новой энергией',
+        });
+      }
+    } catch (error) {
+      console.error('Error collecting energy:', error);
+      toast.error('Ошибка получения энергии');
+    } finally {
+      setIsCollecting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <Icon name="Loader2" size={48} className="animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">

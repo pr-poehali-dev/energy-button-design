@@ -1,0 +1,45 @@
+{
+  "tests": [
+    {
+      "name": "Clear test user data before tests",
+      "method": "DELETE",
+      "path": "/",
+      "headers": {
+        "x-user-id": "test_user_flow"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get energy status for new user",
+      "method": "GET",
+      "path": "/",
+      "headers": {
+        "x-user-id": "test_user_flow"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "energy": 0,
+        "canCollect": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Collect energy first time",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "x-user-id": "test_user_flow"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "energy": 3
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
