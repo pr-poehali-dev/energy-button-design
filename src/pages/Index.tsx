@@ -32,6 +32,15 @@ const Index = () => {
         }
       });
       
+      if (response.status === 429) {
+        const data = await response.json();
+        toast.error('Слишком много запросов', {
+          description: 'Подождите немного перед следующей попыткой'
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       const data = await response.json();
       setEnergy(data.energy);
       setCanCollect(data.canCollect);
@@ -59,6 +68,15 @@ const Index = () => {
           'X-User-Id': userId
         }
       });
+      
+      if (response.status === 429) {
+        const data = await response.json();
+        toast.error('Слишком много запросов', {
+          description: 'Подождите немного перед следующей попыткой'
+        });
+        setIsCollecting(false);
+        return;
+      }
       
       const data = await response.json();
       
